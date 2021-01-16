@@ -2,6 +2,7 @@
 using System.Linq;
 namespace BookStoresWebAPI.Controllers
 {
+    [Microsoft.AspNetCore.Authorization.Authorize]
     [Microsoft.AspNetCore.Mvc.Route("api/[controller]")]
     [Microsoft.AspNetCore.Mvc.ApiController]
     public class PublishersController : Microsoft.AspNetCore.Mvc.ControllerBase
@@ -112,13 +113,14 @@ namespace BookStoresWebAPI.Controllers
             _context.Publishers.Add(publisher);
             _context.SaveChanges();
 
-            var publishers = _context.Publishers
+            Models.Publisher publishers =
+                                    await _context.Publishers
                                     .Include(pub => pub.Books)
                                         .ThenInclude(book => book.Sales)
                                         .ThenInclude(store => store.Store)
                                     .Include(pub => pub.Users)
                                     .Where(pub => pub.PubId == publisher.PubId)
-                                    .FirstOrDefault();
+                                    .FirstOrDefaultAsync();
 
             if (publishers == null)
             {
