@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.AspNetCore.Authentication;
 
 namespace BookStoresWebAPI
 {
@@ -27,6 +27,16 @@ namespace BookStoresWebAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            //NewtonJSON 
+            services.AddMvc(option => option.EnableEndpointRouting = false)
+                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
+                .AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+
+            //Basic Authentication
+            services.AddAuthentication("BasicAuthentication")
+                .AddScheme<AuthenticationSchemeOptions, Handlers.BasicAuthenticationHandler>("BasicAuthentication", null);
+
             services.AddDbContext<Models.BookStoresDBContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("BookStoresDB")));
         }
@@ -41,6 +51,7 @@ namespace BookStoresWebAPI
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

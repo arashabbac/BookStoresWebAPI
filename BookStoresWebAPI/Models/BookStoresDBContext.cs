@@ -20,6 +20,8 @@ namespace BookStoresWebAPI.Models
         public virtual DbSet<BookAuthor> BookAuthors { get; set; }
         public virtual DbSet<Job> Jobs { get; set; }
         public virtual DbSet<Publisher> Publishers { get; set; }
+        public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+        public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<Sale> Sales { get; set; }
         public virtual DbSet<Store> Stores { get; set; }
         public virtual DbSet<User> Users { get; set; }
@@ -29,7 +31,7 @@ namespace BookStoresWebAPI.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=BookStoresDB;Integrated Security=True");
+                optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=BookStoresDB;Integrated Security=True;");
             }
         }
 
@@ -136,7 +138,7 @@ namespace BookStoresWebAPI.Models
                 entity.HasOne(d => d.Pub)
                     .WithMany(p => p.Books)
                     .HasForeignKey(d => d.PubId)
-                    .HasConstraintName("FK__Book__pub_id__6166761E");
+                    .HasConstraintName("FK__Book__pub_id__5070F446");
             });
 
             modelBuilder.Entity<BookAuthor>(entity =>
@@ -156,12 +158,12 @@ namespace BookStoresWebAPI.Models
                 entity.HasOne(d => d.Author)
                     .WithMany(p => p.BookAuthors)
                     .HasForeignKey(d => d.AuthorId)
-                    .HasConstraintName("FK__BookAutho__autho__43D61337");
+                    .HasConstraintName("FK__BookAutho__autho__5165187F");
 
                 entity.HasOne(d => d.Book)
                     .WithMany(p => p.BookAuthors)
                     .HasForeignKey(d => d.BookId)
-                    .HasConstraintName("FK__BookAutho__book___42E1EEFE");
+                    .HasConstraintName("FK__BookAutho__book___52593CB8");
             });
 
             modelBuilder.Entity<Job>(entity =>
@@ -181,7 +183,7 @@ namespace BookStoresWebAPI.Models
             modelBuilder.Entity<Publisher>(entity =>
             {
                 entity.HasKey(e => e.PubId)
-                    .HasName("PK__Publishe__2515F222DDC013AD");
+                    .HasName("PK__Publishe__2515F222AB95C8E2");
 
                 entity.ToTable("Publisher");
 
@@ -208,6 +210,46 @@ namespace BookStoresWebAPI.Models
                     .HasMaxLength(2)
                     .IsUnicode(false)
                     .IsFixedLength();
+            });
+
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasKey(e => e.TokenId);
+
+                entity.ToTable("RefreshToken");
+
+                entity.Property(e => e.TokenId).HasColumnName("token_id");
+
+                entity.Property(e => e.ExpiryDate)
+                    .HasColumnName("expiry_date")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.Token)
+                    .IsRequired()
+                    .HasColumnName("token")
+                    .HasMaxLength(200)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.RefreshTokens)
+                    .HasForeignKey(d => d.UserId)
+                    .HasConstraintName("FK__RefreshTo__user___534D60F1");
+            });
+
+            modelBuilder.Entity<Role>(entity =>
+            {
+                entity.ToTable("Role");
+
+                entity.Property(e => e.RoleId).HasColumnName("role_id");
+
+                entity.Property(e => e.RoleDesc)
+                    .IsRequired()
+                    .HasColumnName("role_desc")
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasDefaultValueSql("('New Position - title not formalized yet')");
             });
 
             modelBuilder.Entity<Sale>(entity =>
@@ -246,12 +288,12 @@ namespace BookStoresWebAPI.Models
                 entity.HasOne(d => d.Book)
                     .WithMany(p => p.Sales)
                     .HasForeignKey(d => d.BookId)
-                    .HasConstraintName("FK__Sale2__book_id__756D6ECB");
+                    .HasConstraintName("FK__Sale__book_id__5441852A");
 
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.Sales)
                     .HasForeignKey(d => d.StoreId)
-                    .HasConstraintName("FK__Sale2__store_id__76619304");
+                    .HasConstraintName("FK__Sale__store_id__5535A963");
             });
 
             modelBuilder.Entity<Store>(entity =>
@@ -295,18 +337,20 @@ namespace BookStoresWebAPI.Models
             modelBuilder.Entity<User>(entity =>
             {
                 entity.HasKey(e => e.UserId)
-                    .HasName("PK_user_id")
+                    .HasName("PK_user_id_2")
                     .IsClustered(false);
 
                 entity.ToTable("User");
 
-                entity.Property(e => e.UserId)
-                    .HasColumnName("user_id")
-                    .HasMaxLength(50)
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+
+                entity.Property(e => e.EmailAddress)
+                    .IsRequired()
+                    .HasColumnName("email_address")
+                    .HasMaxLength(100)
                     .IsUnicode(false);
 
                 entity.Property(e => e.FirstName)
-                    .IsRequired()
                     .HasColumnName("first_name")
                     .HasMaxLength(20)
                     .IsUnicode(false);
@@ -316,16 +360,7 @@ namespace BookStoresWebAPI.Models
                     .HasColumnType("datetime")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.Property(e => e.JobId)
-                    .HasColumnName("job_id")
-                    .HasDefaultValueSql("((1))");
-
-                entity.Property(e => e.JobLevel)
-                    .HasColumnName("job_level")
-                    .HasDefaultValueSql("((10))");
-
                 entity.Property(e => e.LastName)
-                    .IsRequired()
                     .HasColumnName("last_name")
                     .HasMaxLength(30)
                     .IsUnicode(false);
@@ -337,22 +372,34 @@ namespace BookStoresWebAPI.Models
                     .IsFixedLength();
 
                 entity.Property(e => e.Password)
+                    .IsRequired()
                     .HasColumnName("password")
                     .HasMaxLength(100)
                     .IsUnicode(false);
 
-                entity.Property(e => e.PubId).HasColumnName("pub_id");
+                entity.Property(e => e.PubId)
+                    .HasColumnName("pub_id")
+                    .HasDefaultValueSql("((1))");
 
-                entity.HasOne(d => d.Job)
-                    .WithMany(p => p.Users)
-                    .HasForeignKey(d => d.JobId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Users__job_id__114A936A");
+                entity.Property(e => e.RoleId)
+                    .HasColumnName("role_id")
+                    .HasDefaultValueSql("((1))");
+
+                entity.Property(e => e.Source)
+                    .IsRequired()
+                    .HasColumnName("source")
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
 
                 entity.HasOne(d => d.Pub)
                     .WithMany(p => p.Users)
                     .HasForeignKey(d => d.PubId)
-                    .HasConstraintName("FK__Users__pub_id__607251E5");
+                    .HasConstraintName("FK__User__pub_id__571DF1D5");
+
+                entity.HasOne(d => d.Role)
+                    .WithMany(p => p.Users)
+                    .HasForeignKey(d => d.RoleId)
+                    .HasConstraintName("FK__User__role_id__5629CD9C");
             });
 
             OnModelCreatingPartial(modelBuilder);
