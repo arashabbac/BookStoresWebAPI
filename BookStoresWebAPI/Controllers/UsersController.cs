@@ -45,7 +45,7 @@ namespace BookStoresWebAPI.Controllers
         }
 
 
-        [Microsoft.AspNetCore.Mvc.HttpGet("Login")]
+        [Microsoft.AspNetCore.Mvc.HttpPost("Login")]
         public async System.Threading.Tasks.Task
             <Microsoft.AspNetCore.Mvc.ActionResult<Models.UserWithToken>>
                     Login([Microsoft.AspNetCore.Mvc.FromBody] Models.User user)
